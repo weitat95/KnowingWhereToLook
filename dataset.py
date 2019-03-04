@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 import torch.optim
 import torch.utils.data
 
+data_loc = '/disk/scratch/data_rich_asians/caption data'
 #A PyTorch Dataset class to be used in a PyTorch DataLoader to create mini-batches.
 class CaptionDataset(Dataset):
 
@@ -13,15 +14,15 @@ class CaptionDataset(Dataset):
         self.split = split
         assert self.split in {'TRAIN', 'VAL', 'TEST'}
         # Open hdf5 file where images are stored
-        self.h = h5py.File(os.path.join('caption data', self.split + '_IMAGES_' + '.hdf5'), 'r')
+        self.h = h5py.File(os.path.join(data_loc, self.split + '_IMAGES_' + '.hdf5'), 'r')
         self.imgs = self.h['images']
         # Captions per image
         self.cpi = self.h.attrs['captions_per_image']
         # Load encoded captions (completely into memory)
-        with open(os.path.join('caption data', self.split + '_CAPTIONS_' + '.json'), 'r') as j:
+        with open(os.path.join(data_loc, self.split + '_CAPTIONS_' + '.json'), 'r') as j:
             self.captions = json.load(j)
         # Load caption lengths (completely into memory)
-        with open(os.path.join('caption data', self.split + '_CAPLENS_' + '.json'), 'r') as j:
+        with open(os.path.join(data_loc, self.split + '_CAPLENS_' + '.json'), 'r') as j:
             self.caplens = json.load(j)
         self.transform = transform
         # Total number of datapoints

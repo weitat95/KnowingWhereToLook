@@ -5,12 +5,14 @@ import h5py
 from random import seed, choice, sample
 from tqdm import tqdm
 from scipy.misc import imread, imresize
-
+import numpy as np
 
 #Load Karpathy's Split. 
-with open('dataset_flickr30k.json', 'r') as j:       
+with open('../data/dataset_coco.json', 'r') as j:       
     data = json.load(j)
 
+#data_loc = '../data/Flicker8k_Dataset' #change when trainin on GPU to disk scratch
+data_loc = '../data/all_coco_img/'
 #Define the lists to store the images paths and the captions of the image
 train_image_paths = []
 train_image_captions = []
@@ -45,7 +47,7 @@ for img in data['images']:                      #Start by looping through every 
         if len(c['tokens']) <= max_len:         #Make sure the sentence isn't too long, and ignore it if so
             captions.append(c['tokens'])        #Append the list of words of the sentence to the list. len(captions) = 5
     #Get the path of the image
-    path = os.path.join('images', img['filename'])     #path if using the Flickr dataset
+    path = os.path.join(data_loc, img['filename'])     #path if using the Flickr dataset
 
     if img['split'] in {'train', 'restval'}:     #Get what karpathy's split is
         train_image_paths.append(path)           #Append the image path to the image_paths list
@@ -109,10 +111,15 @@ for impaths, imcaps, split in [(train_image_paths, train_image_captions, 'TRAIN'
             assert len(captions) == captions_per_image
             
             # Read images
-            img = imread(impaths[i]) 
-            img = imresize(img, (224, 224))                     # Resize the image to the expected size
-            img = img.transpose(2, 0, 1)                        # make the channels (index 2) first,as expected by PyTorch
-            
+            #img = imread(impaths[i]) 
+            #img = imresize(img, (224, 224))                     # Resize the image to the expected size
+            #img = img.transpose(2, 0, 1)                        # make the channels (index 2) first,as expected by PyTorch
+            img = imread(impaths[i])
+            if len(img.shape) == 2:
+                img = img[:, :, np.newaxis]
+                img = np.concatenate([img, img, img], axis=2)
+            img = imresize(img, (224, 224))
+            img = img.transpose(2, 0, 1)
             assert img.shape == (3, 224, 224)                   # raise an error if the image shape is not (3,224,224)
             # Save image to HDF5 file
             images[i] = img

@@ -5,7 +5,8 @@ import torch.optim
 import torch.utils.data
 from torch.nn import init
 import torch.nn.functional as F
-
+import math
+import xception
 #Get what you have, CPU or GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -13,7 +14,8 @@ class Encoder(nn.Module):
     def __init__(self, hidden_size, embed_size):
         super(Encoder,self).__init__()
         #resnet = torchvision.models.resnet101(pretrained = True)
-        resnet = torchvision.models.resnet101(pretrained = True)
+        #resnet = torchvision.models.resnet101(pretrained = True)
+        resnet = xception.xception(True)
         all_modules = list(resnet.children())
         #Remove the last FC layer used for classification and the average pooling layer
         modules = all_modules[:-2]
@@ -21,7 +23,8 @@ class Encoder(nn.Module):
         self.resnet = nn.Sequential(*modules) 
         self.spatial_features = nn.Linear(2048, hidden_size)
         self.global_features = nn.Linear(2048, embed_size)
-        self.avgpool = nn.AvgPool2d(7)
+        self.avgpool =  nn.AdaptiveAvgPool2d((1, 1))           #nn.AvgPool2d(7)
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((7, 7))
         self.dropout = nn.Dropout(0.5)
         self.init_weights()
         self.fine_tune()    # To fine-tune the CNN, self.fine_tune(status = True)
@@ -42,6 +45,7 @@ class Encoder(nn.Module):
         """
         #Run the image through the ResNet
         encoded_image = self.resnet(images)         # (batch_size,2048,7,7)
+        encoded_image = self.adaptive_pool(encoded_image)
         batch_size = encoded_image.shape[0]
         features = encoded_image.shape[1]
         num_pixels = encoded_image.shape[2] * encoded_image.shape[3]

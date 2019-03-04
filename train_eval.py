@@ -10,7 +10,7 @@ import torch.backends.cudnn as cudnn
 from models import *
 from util import *
 from dataset import *
-
+import math
 #Model Parameters
 emb_dim = 512                  # dimension of word embeddings
 attention_dim = 49             # dimension of attention linear layers (k), whoch is = num_pixels, i.e 7x7
@@ -27,10 +27,10 @@ encoder_lr = 1e-5                       # learning rate for encoder if fine-tuni
 decoder_lr = 4e-4                       # learning rate for decoder
 grad_clip = 0.1                         # clip gradients at an absolute value of
 best_bleu4 = 0.                         # Current BLEU-4 score 
-print_freq = 100                        # print training/validation stats every __ batches
+print_freq = 10                        # print training/validation stats every __ batches
 fine_tune_encoder = False               # set to true after 20 epochs 
 checkpoint = None                       # path to checkpoint, None at the begining
-
+file_path = '/disk/scratch/data_rich_asians/caption data/'
 def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_optimizer, epoch, vocab_size):
 
     decoder.train()                 # train mode (dropout and batchnorm is used)
@@ -237,7 +237,7 @@ def evaluate(encoder, decoder):
     val_score = corpus_bleu(all_references, all_predictions)
     return val_score
 
-with open('WORDMAP.json', 'r') as j:
+with open(file_path + 'WORDMAP_.json', 'r') as j:
     word_map = json.load(j)
 
 rev_word_map = {v: k for k, v in word_map.items()}  # idx2word
