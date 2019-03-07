@@ -105,14 +105,14 @@ class AdaptiveLSTMCell(nn.Module):
         return h_new, c_new, s_new
 
 class AdaptiveAttention(nn.Module):
-    def __init__(self, hidden_size, att_dim):
+    def __init__(self, hidden_size, att_dim,dropout_rate=0.5):
         super(AdaptiveAttention,self).__init__()
         # We will set the attention dimension to the same number of pixels, i.e. 49
         self.cnn_att = nn.Linear(hidden_size, att_dim, bias=False)
         self.dec_att = nn.Linear(hidden_size, att_dim, bias=False)
         self.sen_out = nn.Linear(hidden_size,att_dim, bias=False)
         self.att_out = nn.Linear(att_dim,1, bias=False) 
-        self.dropout = nn.Dropout(0.5)
+        self.dropout = nn.Dropout(dropout_rate)
         self.init_weights()
         
     def init_weights(self):
@@ -150,7 +150,7 @@ class DecoderWithAttention(nn.Module):
         super(DecoderWithAttention,self).__init__()
         self.fc = nn.Linear(hidden_size, vocab_size)
         self.LSTM = AdaptiveLSTMCell(embed_size * 2,hidden_size)
-        self.adaptive_attention = AdaptiveAttention(hidden_size, att_dim)
+        self.adaptive_attention = AdaptiveAttention(hidden_size, att_dim,dropout_rate)
         # input to the LSTMCell should be of shape (batch, input_size). Remember we are concatenating the word with
         # the global image features, therefore out input features should be embed_size * 2
         self.embedding = nn.Embedding(vocab_size, embed_size)  
