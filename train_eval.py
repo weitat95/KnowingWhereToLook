@@ -11,14 +11,17 @@ from models import *
 from util import *
 from dataset import *
 import math
+import sys
 #Model Parameters
-emb_dim = 512                  # dimension of word embeddings
+emb_dim = 300                  # dimension of word embeddings
 attention_dim = 49             # dimension of attention linear layers (k), whoch is = num_pixels, i.e 7x7
 hidden_size = 512              # dimension of decoder RNN
+dropout=0.25
+useGloVe =True
 cudnn.benchmark = True         # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 # Training parameters
 start_epoch = 0
-epochs = 5                              # number of epochs to train before finetuning the encoder. Set to 18 when finetuning ecoder
+epochs = 30                              # number of epochs to train before finetuning the encoder. Set to 18 when finetuning ecoder
 epochs_since_improvement = 0            # keeps track of number of epochs since there's been an improvement in validation BLEU
 # if using multiple GPUs, then actual batch size = gpu_num * batch_size. One GPU is set to 20
 batch_size = 80                         # set to 20 when finetuning the encoder
@@ -30,7 +33,7 @@ best_bleu4 = 0.                         # Current BLEU-4 score
 print_freq = 10                        # print training/validation stats every __ batches
 fine_tune_encoder = False               # set to true after 20 epochs 
 checkpoint = None                       # path to checkpoint, None at the begining
-file_path = '/disk/scratch/data_rich_asians/caption data/'
+file_path = '/afs/inf.ed.ac.uk/group/msc-projects/s1451292/caption data2/'
 def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_optimizer, epoch, vocab_size):
 
     decoder.train()                 # train mode (dropout and batchnorm is used)
@@ -70,6 +73,7 @@ def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_
         top5 = accuracy(scores, targets, 5)
         losses.update(loss.item(), sum(decode_lengths))    
         top5accs.update(top5, sum(decode_lengths))
+        sys.stdout.flush()
         # Print status every print_freq iterations --> (print_freq * batch_size) images
         if i % print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
@@ -242,13 +246,21 @@ with open(file_path + 'WORDMAP_.json', 'r') as j:
 
 rev_word_map = {v: k for k, v in word_map.items()}  # idx2word
 
+
+
 if checkpoint is None:
     decoder = DecoderWithAttention(hidden_size = hidden_size,
                                    vocab_size = len(word_map), 
                                    att_dim = attention_dim, 
-                                   embed_size = emb_dim) 
+                                   embed_size = emb_dim,
+                                   dropout_rate = dropout)
+
+    if useGloVe:
+      word_emb, word_dim = load_embeddings(file_path + 'glove.6B.300d.txt', word_map)
+      decoder.load_pretrained_embeddings(word_emb)
+      decoder.fine_tune_embeddings(False)
     encoder = Encoder(hidden_size = hidden_size, embed_size = emb_dim)
-    decoder_optimizer = torch.optim.Adam(params=decoder.parameters(),lr=decoder_lr, betas = (0.8,0.999))
+    decoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder.parameters()),lr=decoder_lr, betas = (0.8,0.999))
     encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()),
                                          lr=encoder_lr, betas = (0.8,0.999))
     
@@ -274,13 +286,17 @@ criterion = nn.CrossEntropyLoss().to(device)
 # Custom dataloaders
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
 
-train_loader = torch.utils.data.DataLoader(CaptionDataset('TRAIN', transform=transforms.Compose([normalize])),
+train_loader = torch.utils.data.DataLoader(CaptionDataset('TRAIN', transform=transforms.Compose([normalize]),data_loc = file_path),
                                            batch_size=batch_size, 
                                            shuffle=True)
 
-val_loader = torch.utils.data.DataLoader(CaptionDataset('VAL', transform=transforms.Compose([normalize])),
+val_loader = torch.utils.data.DataLoader(CaptionDataset('VAL', transform=transforms.Compose([normalize]),data_loc = file_path),
                                          batch_size=batch_size, 
                                          shuffle=True)
+print("Using GPU: {}".format(torch.cuda.is_available()))
+print("AttentionDim: {}\nDecoderDim: {}\nDropout: {}\nuseGlove: {}\nCheckpoint: {}".format(attention_dim, hidden_size, dropout, useGloVe, checkpoint))
+sys.stdout.flush()
+
 # Epochs
 for epoch in range(start_epoch, epochs):
     
@@ -306,6 +322,7 @@ for epoch in range(start_epoch, epochs):
     # Evaluate with beam search 
     recent_bleu4 = evaluate(encoder, decoder)
     print('\n BLEU-4 Score on the Complete Dataset @ beam size of 3 - {}\n'.format(recent_bleu4))
+    sys.stdout.flush()
          
     # Check if there was an improvement
     is_best = recent_bleu4 > best_bleu4

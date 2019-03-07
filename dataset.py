@@ -6,11 +6,11 @@ from torch.utils.data import Dataset
 import torch.optim
 import torch.utils.data
 
-data_loc = '/disk/scratch/data_rich_asians/caption data'
+#data_loc = '/afs/inf.ed.ac.uk/group/msc-projects/s1451292/caption data2'
 #A PyTorch Dataset class to be used in a PyTorch DataLoader to create mini-batches.
 class CaptionDataset(Dataset):
 
-    def __init__(self, split, transform=None):
+    def __init__(self, split, transform=None,data_loc=''):
         self.split = split
         assert self.split in {'TRAIN', 'VAL', 'TEST'}
         # Open hdf5 file where images are stored

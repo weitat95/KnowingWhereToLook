@@ -146,7 +146,7 @@ class AdaptiveAttention(nn.Module):
         return alpha_t, beta_t, c_hat
 
 class DecoderWithAttention(nn.Module):
-    def __init__(self,hidden_size, vocab_size, att_dim, embed_size):
+    def __init__(self,hidden_size, vocab_size, att_dim, embed_size, dropout_rate):
         super(DecoderWithAttention,self).__init__()
         self.fc = nn.Linear(hidden_size, vocab_size)
         self.LSTM = AdaptiveLSTMCell(embed_size * 2,hidden_size)
@@ -157,13 +157,28 @@ class DecoderWithAttention(nn.Module):
         self.init_h = nn.Linear(2048, hidden_size)  # linear layer to find initial hidden state of LSTMCell
         self.init_c = nn.Linear(2048, hidden_size)  # linear layer to find initial cell state of LSTMCell
         self.vocab_size = vocab_size
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=dropout_rate)
         self.init_weights()
         
     def init_weights(self):
         self.fc.weight.data.uniform_(-0.1, 0.1)
         self.fc.bias.data.fill_(0)
         self.embedding.weight.data.uniform_(-0.1, 0.1)
+
+    def load_pretrained_embeddings(self, embeddings):
+        """
+        Loads embedding layer with pre-trained embeddings.
+        :param embeddings: pre-trained embeddings
+        """
+        self.embedding.weight = nn.Parameter(embeddings)
+
+    def fine_tune_embeddings(self, fine_tune=False):
+        """
+        Allow fine-tuning of embedding layer? (Only makes sense to not-allow if using pre-trained embeddings).
+        :param fine_tune: Allow?
+        """
+        for p in self.embedding.parameters():    
+          p.requires_grad = fine_tune
     
     def init_hidden_state(self, enc_image):
 
