@@ -14,33 +14,34 @@ datasetFolder="caption_data_64"
 
 # DONT CHANGE THIS
 
-checkpointname="./checkpoint_${datasetFolder}_att_${attentionDim}_dec_${decoderdim}_drop_${dropout}.pth.tar"
-
+#checkpointname="./checkpoint_${datasetFolder}_att_${attentionDim}_dec_${decoderdim}_drop_${dropout}.pth.tar"
+checkpointname="${datasetFolder}_att_${attentionDim}_dec_${decoderDim}_drop_${dropout}"
 # DONT CHANGE THIS
 
 # CHANGE THIS INSTEAD ****************
 
-checkpoint="None"
-#checkpoint=$checkpointname
+usecheckpoint="False"
+#usecheckpoint="True"
 
 # ************************************
 
+cpfile="./../../checkpoint_${checkpointname}.pth.tar"
 
-if [[ "$checkpoint" != "None" ]];
+if [[ "$usecheckpoint" != "False" ]];
 then
     
-    if [ ! -f "./../../$checkpointname" ];
+    if [ ! -f "$cpfile" ];
     then
-        echo "$checkpointname : not found! Start from None?"
+        echo "$cpfile : not found! Start from None?"
         exit 1
     else
         echo "Continue from checkpoint"
     fi
 
 else
-    if [ -f "./../../$checkpointname" ];
+    if [ -f "$cpfile" ];
     then
-        echo "$checkpointname : already exist! Continue from checkpoint?"
+        echo "$cpfile : already exist! Continue from checkpoint?"
         exit 1
     else
         echo "Starting from scratch"
@@ -51,7 +52,8 @@ echo "Running Experiments for"
 echo "attentionDim = $attentionDim"
 echo "decoderDim = $decoderDim"
 echo "dropout = $dropout"
-echo "UsingGlove = $userGlove"
+echo "UsingGlove = $useGlove"
+echo "Starting from Checkpoint = $usecheckpoint"
 echo "$checkpointname"
 
 
@@ -99,5 +101,5 @@ source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
 cd ..
 
-python train_eval.py --attentionDim=$attentionDim --decoderDim=$decoderDim --dropout=$dropout --dataset=$datasetFolder -useGlove=$useGlove --checkpoint="$checkpoint"
+python train_eval.py --attentionDim=$attentionDim --decoderDim=$decoderDim --dropout=$dropout --dataset=$datasetFolder --useGlove=$useGlove --checkpointName="$checkpointname" --useCheckpoint="$usecheckpoint"
 
