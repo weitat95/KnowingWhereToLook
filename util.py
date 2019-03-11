@@ -73,7 +73,7 @@ def load_embeddings(emb_file, word_map):
 
 
 #Function to save the model checkpoint
-def save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer, decoder_optimizer, bleu4, is_best):
+def save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer, decoder_optimizer, bleu4, is_best, data_name):
     state = {'epoch': epoch,
              'epochs_since_improvement': epochs_since_improvement,
              'bleu-4': bleu4,
@@ -81,8 +81,7 @@ def save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, encoder_o
              'decoder': decoder,
              'encoder_optimizer': encoder_optimizer,
              'decoder_optimizer': decoder_optimizer}
-
-    filename = 'checkpoint_' + '.pth.tar' # + str(epoch) + '_' + str(bleu4)
+    filename = 'checkpoint_' + data_name + '.pth.tar'
     torch.save(state, filename)
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint
     if is_best:

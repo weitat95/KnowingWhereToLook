@@ -1,0 +1,6 @@
+__pycache__
+*.pth.tar
+**/*.pth.tar
+**/slurm*
+**/*.out
+**/*.sh

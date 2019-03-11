@@ -12,12 +12,14 @@ from util import *
 from dataset import *
 import math
 import sys
+import argparse
+
 #Model Parameters
 emb_dim = 300                  # dimension of word embeddings
 attention_dim = 49             # dimension of attention linear layers (k), whoch is = num_pixels, i.e 7x7
 hidden_size = 512              # dimension of decoder RNN
-dropout=0.25
-useGloVe =True
+dropout=0.5
+useGloVe = True
 cudnn.benchmark = True         # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 # Training parameters
 start_epoch = 0
@@ -241,99 +243,131 @@ def evaluate(encoder, decoder):
     val_score = corpus_bleu(all_references, all_predictions)
     return val_score
 
-with open(file_path + 'WORDMAP_.json', 'r') as j:
-    word_map = json.load(j)
+if __name == '__main__':
+    main()
 
-rev_word_map = {v: k for k, v in word_map.items()}  # idx2word
+def main():
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--attentionDim', type=int,default=49)
+    parser.add_argument('--decoderDim', type=int, default=512)
+    parser.add_argument('--dropout', type=float, default=0.5)
+    parser.add_argument('--dataset', type=str, default='caption_data')
+    parser.add_argument('--useGlove', type=str, default='True')
+    parser.add_argument('--checkpoint', type=str, default='None')
+    args=parser.parse_args()
 
+    attention_dim = args.attentionDim
+    hidden_size = args.decoderDim
+    dropout = args.dropout
+    file_path = "/disk/scratch/dra/{}/".format(args.dataset)
+    if args.useGlove = 'True':
+        useGloVe = True
+    elif args.useGlove = 'False':
+        useGloVe = False
 
-if checkpoint is None:
-    decoder = DecoderWithAttention(hidden_size = hidden_size,
-                                   vocab_size = len(word_map), 
-                                   att_dim = attention_dim, 
-                                   embed_size = emb_dim,
-                                   dropout_rate = dropout)
-
-    if useGloVe:
-      word_emb, word_dim = load_embeddings(file_path + 'glove.6B.300d.txt', word_map)
-      decoder.load_pretrained_embeddings(word_emb)
-      decoder.fine_tune_embeddings(False)
-    encoder = Encoder(hidden_size = hidden_size, embed_size = emb_dim)
-    decoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder.parameters()),lr=decoder_lr, betas = (0.8,0.999))
-    encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()),
-                                         lr=encoder_lr, betas = (0.8,0.999))
-    
-else:
-    checkpoint = torch.load(checkpoint)
-    start_epoch = checkpoint['epoch'] + 1
-    epochs_since_improvement = checkpoint['epochs_since_improvement']
-    best_bleu4 = checkpoint['bleu-4']
-    decoder = checkpoint['decoder']
-    decoder_optimizer = checkpoint['decoder_optimizer']
-    encoder = checkpoint['encoder']
-    encoder_optimizer = checkpoint['encoder_optimizer']
-    if fine_tune_encoder:
-        encoder.fine_tune(fine_tune_encoder)
-
-# Move to GPU, if available
-decoder = decoder.to(device)
-encoder = encoder.to(device)
-
-# Loss function
-criterion = nn.CrossEntropyLoss().to(device)
-
-# Custom dataloaders
-normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
-
-train_loader = torch.utils.data.DataLoader(CaptionDataset('TRAIN', transform=transforms.Compose([normalize]),data_loc = file_path),
-                                           batch_size=batch_size, 
-                                           shuffle=True)
-
-val_loader = torch.utils.data.DataLoader(CaptionDataset('VAL', transform=transforms.Compose([normalize]),data_loc = file_path),
-                                         batch_size=batch_size, 
-                                         shuffle=True)
-print("Using GPU: {}".format(torch.cuda.is_available()))
-print("AttentionDim: {}\nDecoderDim: {}\nDropout: {}\nuseGlove: {}\nCheckpoint: {}".format(attention_dim, hidden_size, dropout, useGloVe, checkpoint))
-sys.stdout.flush()
-
-# Epochs
-for epoch in range(start_epoch, epochs):
-    
-    if epoch>20:
-        adjust_learning_rate(decoder_optimizer, epoch)
-        if fine_tune_encoder:
-            adjust_learning_rate(encoder_optimizer, epoch)
-
-    # Early Stopping if the validation score does not imporive for 6 consecutive epochs
-    if epochs_since_improvement == 6:
-        break
-
-    # One epoch's training
-    train(train_loader=train_loader,
-          encoder=encoder,
-          decoder=decoder,
-          criterion=criterion,
-          encoder_optimizer=encoder_optimizer,
-          decoder_optimizer=decoder_optimizer,
-          epoch=epoch,
-          vocab_size = len(word_map))
-    
-    # Evaluate with beam search 
-    recent_bleu4 = evaluate(encoder, decoder)
-    print('\n BLEU-4 Score on the Complete Dataset @ beam size of 3 - {}\n'.format(recent_bleu4))
-    sys.stdout.flush()
-         
-    # Check if there was an improvement
-    is_best = recent_bleu4 > best_bleu4
-    best_bleu4 = max(recent_bleu4, best_bleu4)
-    if not is_best:
-        epochs_since_improvement += 1   
-        print("\nEpochs since last improvement: {}\n".format(epochs_since_improvement))
+    if args.checkpoint = 'None':
+        checkpoint = None
     else:
-        epochs_since_improvement = 0    #Reset to zero if there is any improvement 
+        checkpoint = args.checkpoint
+    file_name = "{}_att_{}_dec_{}_drop_{}".format(args.dataset, attention_dim, hidden_size, dropout)
 
-    # Save checkpoint
-    print("Finished one epoch. Saving to drive")
-    save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer,
-                    decoder_optimizer, recent_bleu4, is_best)
+    print("\n\n**********\nExperimentName: {}\n********\n\n").format(file_name)
+    print("Using GPU: {}".format(torch.cuda.is_available()))
+    print("AttentionDim: {}\nDecoderDim: {}\nDropout: {}\nuseGlove: {}\nCheckpoint: {}".format(attention_dim, hidden_size, dropout, useGloVe, checkpoint))
+    sys.stdout.flush()
+    
+    with open(file_path + 'WORDMAP_.json', 'r') as j:
+        word_map = json.load(j)
+
+    rev_word_map = {v: k for k, v in word_map.items()}  # idx2word
+
+
+
+    if checkpoint is None:
+        decoder = DecoderWithAttention(hidden_size = hidden_size,
+                                       vocab_size = len(word_map), 
+                                       att_dim = attention_dim, 
+                                       embed_size = emb_dim,
+                                       dropout_rate = dropout)
+
+        if useGloVe:
+          word_emb, word_dim = load_embeddings(file_path + 'glove.6B.300d.txt', word_map)
+          decoder.load_pretrained_embeddings(word_emb)
+          decoder.fine_tune_embeddings(False)
+
+        encoder = Encoder(hidden_size = hidden_size, embed_size = emb_dim)
+        decoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, decoder.parameters()),lr=decoder_lr, betas = (0.8,0.999))
+        encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()),
+                                             lr=encoder_lr, betas = (0.8,0.999))
+        
+    else:                                    
+        checkpoint = torch.load(checkpoint)
+        start_epoch = checkpoint['epoch'] + 1
+        epochs_since_improvement = checkpoint['epochs_since_improvement']
+        best_bleu4 = checkpoint['bleu-4']
+        decoder = checkpoint['decoder']
+        decoder_optimizer = checkpoint['decoder_optimizer']
+        encoder = checkpoint['encoder']
+        encoder_optimizer = checkpoint['encoder_optimizer']
+        if fine_tune_encoder:
+            encoder.fine_tune(fine_tune_encoder)
+
+    # Move to GPU, if available
+    decoder = decoder.to(device)
+    encoder = encoder.to(device)
+
+    # Loss function
+    criterion = nn.CrossEntropyLoss().to(device)
+
+    # Custom dataloaders
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
+
+    train_loader = torch.utils.data.DataLoader(CaptionDataset('TRAIN', transform=transforms.Compose([normalize]),data_loc = file_path),
+                                               batch_size=batch_size, 
+                                               shuffle=True)
+
+    val_loader = torch.utils.data.DataLoader(CaptionDataset('VAL', transform=transforms.Compose([normalize]),data_loc = file_path),
+                                             batch_size=batch_size, 
+                                             shuffle=True)
+
+    # Epochs
+    for epoch in range(start_epoch, epochs):
+        
+        if epoch>20:
+            adjust_learning_rate(decoder_optimizer, epoch)
+            if fine_tune_encoder:
+                adjust_learning_rate(encoder_optimizer, epoch)
+
+        # Early Stopping if the validation score does not imporive for 6 consecutive epochs
+        if epochs_since_improvement == 6:
+            break
+
+        # One epoch's training
+        train(train_loader=train_loader,
+              encoder=encoder,
+              decoder=decoder,
+              criterion=criterion,
+              encoder_optimizer=encoder_optimizer,
+              decoder_optimizer=decoder_optimizer,
+              epoch=epoch,
+              vocab_size = len(word_map))
+        
+        # Evaluate with beam search 
+        recent_bleu4 = evaluate(encoder, decoder)
+        print('\n BLEU-4 Score on the Complete Dataset @ beam size of 3 - {}\n'.format(recent_bleu4))
+        sys.stdout.flush()
+             
+        # Check if there was an improvement
+        is_best = recent_bleu4 > best_bleu4
+        best_bleu4 = max(recent_bleu4, best_bleu4)
+        if not is_best:
+            epochs_since_improvement += 1   
+            print("\nEpochs since last improvement: {}\n".format(epochs_since_improvement))
+        else:
+            epochs_since_improvement = 0    #Reset to zero if there is any improvement 
+
+        # Save checkpoint
+        print("Finished one epoch. Saving to drive")
+        save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer,
+                        decoder_optimizer, recent_bleu4, is_best, file_name)
