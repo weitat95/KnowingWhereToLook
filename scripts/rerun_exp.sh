@@ -19,7 +19,17 @@ do
         for sfile in ./*
         do
             if [[ "$sfile" == "./$OUTPUT_NAME"* ]]; then
-                echo "Parsing : $sfile !"
+                echo "Parsing: $sfile !"
+
+                JOBID=$( echo $sfile | sed 's/\.\/slurm-\(.*\)\.out/\1/g')
+                echo "JobId: $JOBID"
+                
+                SQUEUE_CHECK=$( squeue --job $JOBID | head -2 | tail -1 | grep -o $JOBID )
+
+                if [[ "$SQUEUE_CHECK" == "$JOBID" ]]; then
+                    echo "!!! Job: $JOBID is still Running"
+                    break
+                fi
 
                 STARTEPOCH=$(grep -w Epoch $sfile | head -n 1 | grep -o "\[[0-9]\{1,2\}\]" | sed 's/.*\[\([^]]*\)\].*/\1/g')
 
@@ -28,7 +38,7 @@ do
                 echo "Start Epoch: ""$STARTEPOCH"
                 echo "End Epoch: ""$ENDEPOCH"
                 FILE_NAME="epoch_""$STARTEPOCH""_""$ENDEPOCH"".out"
-
+                echo "Moving $sfile to ./$RESULT_FOLDER/$FILE_NAME " 
                 mv $sfile ./$RESULT_FOLDER/$FILE_NAME
         
             fi
