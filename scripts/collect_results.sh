@@ -20,11 +20,23 @@ do
         echo -e " Experiment: $file\n"
         EPOCH=$( cat "$SORTED_RESULT_NAME" | head -n 1 | sed 's/\(.*\):.*/\1/g' )
         BLEU=$( cat "$SORTED_RESULT_NAME" | head -n 1 | sed 's/.*-\ \(.*\)/\1/g' )
+        
+        if [[ "$EPOCH" == "" ]]; then
+            echo "No Results.."
+        else
+            let BESTEPOCH=$EPOCH-1
+            ATTENDIM=$( cat $FINAL_RESULT_NAME | grep AttentionDim | head -n 1 )
+            DECDIM=$( cat $FINAL_RESULT_NAME | grep DecoderDim | head -n 1 )
+            DROPOUT=$( cat $FINAL_RESULT_NAME | grep Dropout | head -n 1 )
 
-        let BESTEPOCH=$EPOCH-1
-        echo " Best BLEU-4:"
-        echo " Epoch: $BESTEPOCH, BLEU-4: $BLEU"  
-        echo -e "\n *************** \n"
+            echo " Best BLEU-4:"
+            echo " $ATTENDIM, $DECDIM, $DROPOUT, BLEU-4: $BLEU, Epoch: $BESTEPOCH"  
+            if cat ./$FINAL_RESULT_NAME | tail -n 1 | grep -q "DUE TO TIME LIMIT";then
+                echo " RESULTS NOT FINAL ! "
+            fi
+
+            echo -e "\n *************** \n"
+        fi
         cd ../..
     fi
 done
