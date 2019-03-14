@@ -11,6 +11,7 @@ decoderDim=512
 dropout=0.5
 useGlove="True"
 datasetFolder="caption_data_64"
+grad_clip=0.1
 
 # DONT CHANGE THIS
 
@@ -101,5 +102,5 @@ source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
 cd ..
 
-python train_eval.py --attentionDim=$attentionDim --decoderDim=$decoderDim --dropout=$dropout --dataset=$datasetFolder --useGlove=$useGlove --checkpointName="$checkpointname" --useCheckpoint="$usecheckpoint"
+python train_eval.py --attentionDim=$attentionDim --decoderDim=$decoderDim --dropout=$dropout --dataset=$datasetFolder --useGlove=$useGlove --checkpointName="$checkpointname" --useCheckpoint="$usecheckpoint" --gradClip=$grad_clip 
 

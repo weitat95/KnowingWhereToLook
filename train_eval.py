@@ -253,12 +253,15 @@ parser.add_argument('--useGlove', type=str, default='True')
 parser.add_argument('--useCheckpoint', type=str, default='False')
 parser.add_argument('--checkpointName', type=str, default='noName')
 parser.add_argument('--printFreq', type=int, default=100)
+parser.add_argument('--gradClip', type=float, default=0.1)
 args=parser.parse_args()
 
 print_freq = args.printFreq
 attention_dim = args.attentionDim
 hidden_size = args.decoderDim
 dropout = args.dropout
+grad_clip = args.gradClip
+
 file_path = "/disk/scratch/dra/{}/".format(args.dataset)
 if args.useGlove == 'True':
     useGloVe = True
@@ -274,7 +277,7 @@ file_name = "{}".format(args.checkpointName)
 
 print("\n\n**********\nExperimentName: {}\n********\n\n".format(file_name))
 print("Using GPU: {}".format(torch.cuda.is_available()))
-print("AttentionDim: {}\nDecoderDim: {}\nDropout: {}\nuseGlove: {}\nStart from Checkpoint: {}\nCheckpoint Name: {}".format(attention_dim, hidden_size, dropout, useGloVe, checkpoint, file_name))
+print("AttentionDim: {}\nDecoderDim: {}\nDropout: {}\nuseGlove: {}\nStart from Checkpoint: {}\nCheckpoint Name: {}\nClipGradient: {}".format(attention_dim, hidden_size, dropout, useGloVe, checkpoint, file_name, grad_clip))
 sys.stdout.flush()
 
 with open(file_path + 'WORDMAP_.json', 'r') as j:
