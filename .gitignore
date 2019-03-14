@@ -1,0 +1,6 @@
+*.pth.tar
+**/*.pth.tar
+**/*.sh
+*.sh
+__pycache__
+**/*.out

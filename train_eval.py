@@ -31,6 +31,8 @@ print_freq = 100                        # print training/validation stats every 
 fine_tune_encoder = False               # set to true after 20 epochs 
 checkpoint = None                       # path to checkpoint, None at the begining
 
+file_path = '/disk/scratch/dra/caption_data/'
+
 def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_optimizer, epoch, vocab_size):
 
     decoder.train()                 # train mode (dropout and batchnorm is used)
@@ -237,7 +239,7 @@ def evaluate(encoder, decoder):
     val_score = corpus_bleu(all_references, all_predictions)
     return val_score
 
-with open('WORDMAP.json', 'r') as j:
+with open(file_path+'WORDMAP.json', 'r') as j:
     word_map = json.load(j)
 
 rev_word_map = {v: k for k, v in word_map.items()}  # idx2word
