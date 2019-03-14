@@ -10,6 +10,7 @@ import torch.backends.cudnn as cudnn
 from models import *
 from util import *
 from dataset import *
+import sys
 
 #Model Parameters
 emb_dim = 512                  # dimension of word embeddings
@@ -239,9 +240,10 @@ def evaluate(encoder, decoder):
     val_score = corpus_bleu(all_references, all_predictions)
     return val_score
 
-with open(file_path+'WORDMAP.json', 'r') as j:
+with open(file_path+'WORDMAP_.json', 'r') as j:
     word_map = json.load(j)
 
+sys.stdout.flush()
 rev_word_map = {v: k for k, v in word_map.items()}  # idx2word
 
 if checkpoint is None:
