@@ -32,7 +32,7 @@ print_freq = 100                        # print training/validation stats every 
 fine_tune_encoder = False               # set to true after 20 epochs 
 checkpoint = None                       # path to checkpoint, None at the begining
 
-file_path = '/disk/scratch/dra/caption_data/'
+file_path = '/disk/scratch/dra/caption_data_64/'
 
 def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_optimizer, epoch, vocab_size):
 
@@ -310,6 +310,7 @@ for epoch in range(start_epoch, epochs):
     # Evaluate with beam search 
     recent_bleu4 = evaluate(encoder, decoder)
     print('\n BLEU-4 Score on the Complete Dataset @ beam size of 3 - {}\n'.format(recent_bleu4))
+    sys.stdout.flush()
          
     # Check if there was an improvement
     is_best = recent_bleu4 > best_bleu4

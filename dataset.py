@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 import torch.optim
 import torch.utils.data
 
-data_loc = '/disk/scratch/dra/caption_data'
+data_loc = '/disk/scratch/dra/caption_data_64'
 
 #A PyTorch Dataset class to be used in a PyTorch DataLoader to create mini-batches.
 class CaptionDataset(Dataset):
