@@ -35,6 +35,12 @@ do
 
                 ENDEPOCH=$(grep -w Epoch $sfile | tail -n 1 | grep -o "\[[0-9]\{1,2\}\]" | sed 's/.*\[\([^]]*\)\].*/\1/g')
                 
+                FSTARTEPOCH=$( printf "%02d" $STARTEPOCH)
+                FENDEPOCH=$( printf "%02d" $ENDEPOCH)
+                
+                STARTEPOCH=$FSTARTEPOCH
+                ENDEPOCH=$FENDEPOCH 
+
                 echo "Start Epoch: ""$STARTEPOCH"
                 echo "End Epoch: ""$ENDEPOCH"
                 FILE_NAME="epoch_""$STARTEPOCH""_""$ENDEPOCH"".out"

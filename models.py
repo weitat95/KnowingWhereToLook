@@ -14,8 +14,8 @@ class Encoder(nn.Module):
     def __init__(self, hidden_size, embed_size):
         super(Encoder,self).__init__()
         #resnet = torchvision.models.resnet101(pretrained = True)
-        #resnet = torchvision.models.resnet101(pretrained = True)
-        resnet = xception.xception(True)
+        resnet = torchvision.models.resnet101(pretrained = True)
+        #resnet = xception.xception(True)
         all_modules = list(resnet.children())
         #Remove the last FC layer used for classification and the average pooling layer
         modules = all_modules[:-2]
