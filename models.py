@@ -7,14 +7,19 @@ from torch.nn import init
 import torch.nn.functional as F
 import math
 import xception
+import pretrainedmodels
+import pretrainedmodels.utils as utils
+
 #Get what you have, CPU or GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class Encoder(nn.Module):
     def __init__(self, hidden_size, embed_size):
         super(Encoder,self).__init__()
+        model_name = 'xception'
+        resnet = pretrainedmodels.__dict__[model_name](num_classes=1000, pretrained='imagenet')
         #resnet = torchvision.models.resnet101(pretrained = True)
-        resnet = torchvision.models.resnet101(pretrained = True)
         #resnet = xception.xception(True)
         all_modules = list(resnet.children())
         #Remove the last FC layer used for classification and the average pooling layer
@@ -28,7 +33,8 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(0.5)
         self.init_weights()
         self.fine_tune()    # To fine-tune the CNN, self.fine_tune(status = True)
-    
+        
+        self.tf_img = utils.TransformImage(resnet)
     def init_weights(self):
         """
         Initialize the weights of the spatial and global features, since we are applying a transformation
@@ -44,7 +50,12 @@ class Encoder(nn.Module):
         input: resized image of shape (batch_size,3,224,224)
         """
         #Run the image through the ResNet
+        #input_tensor = self.tf_img(images)
+        #print("images: {}\n input tensor: {}".format(images.shape, input_tensor.shape))
+        #input_tensor = input_tensor.unsqueeze(0)
+        #print("inputTensor UNSQUEEZE: {}".format(input_tensor.shape))
         encoded_image = self.resnet(images)         # (batch_size,2048,7,7)
+        print("encoded_image: {}".format(encoded_image.shape))
         encoded_image = self.adaptive_pool(encoded_image)
         batch_size = encoded_image.shape[0]
         features = encoded_image.shape[1]
