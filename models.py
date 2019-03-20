@@ -17,7 +17,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Encoder(nn.Module):
     def __init__(self, hidden_size, embed_size):
         super(Encoder,self).__init__()
-        model_name = 'xception'
+        model_name = 'se_resnet101'
         resnet = pretrainedmodels.__dict__[model_name](num_classes=1000, pretrained='imagenet')
         #resnet = torchvision.models.resnet101(pretrained = True)
         #resnet = xception.xception(True)
