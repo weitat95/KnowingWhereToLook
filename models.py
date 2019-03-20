@@ -17,7 +17,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Encoder(nn.Module):
     def __init__(self, hidden_size, embed_size):
         super(Encoder,self).__init__()
-        model_name = 'squeezenet1_0'
+        model_name = 'squeezenet1_1'
         resnet = pretrainedmodels.__dict__[model_name](num_classes=1000, pretrained='imagenet')
         all_modules = list(resnet.children())
         #Remove the last FC layer used for classification and the average pooling layer
