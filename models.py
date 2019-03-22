@@ -143,7 +143,11 @@ class AdaptiveAttention(nn.Module):
         alpha_hat = F.softmax(concat, dim=1)                                    # (batch_size, num_pixels+1)
         beta_t = alpha_hat[:,-1].unsqueeze(1)                                   # (batch_size,1)
         c_hat = beta_t * st + (1 - beta_t) * ct                                 # (batch_size, hidden_size)
-        return alpha_t, beta_t, c_hat
+        alpha_hat = alpha_hat[:,:49]
+        print(alpha_hat)
+        print(alpha_hat.shape)
+        print(alpha_t)
+        return alpha_hat, beta_t, c_hat
 
 class DecoderWithAttention(nn.Module):
     def __init__(self,hidden_size, vocab_size, att_dim, embed_size, dropout_rate):
